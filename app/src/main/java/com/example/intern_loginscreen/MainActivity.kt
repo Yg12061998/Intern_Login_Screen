@@ -32,21 +32,18 @@ class MainActivity : AppCompatActivity() {
         etEmail = findViewById(R.id.etEmail)
         etPass = findViewById(R.id.etPassword)
         btnLogin = findViewById(R.id.btnLogin)
-
         lateinit var email: String
         lateinit var pass: String
 
         btnLogin.setOnClickListener {
+
             email = etEmail.text.toString()
             pass = etPass.text.toString()
 
-            //Toast.makeText(applicationContext, "" + email+": "+pass , Toast.LENGTH_SHORT).show()
-
-
-            if (ConnectionManager().checkConnection(this)) {
+            if (ConnectionManager().checkConnection(this)) {           /// Internet Check - Is Internet available or NOT
 
                 try {
-                    volleyRequest(email, pass)
+                    volleyRequest(email, pass)                                /// Volley Request is call by user Defined volleyRequest(email : String , pass:String) --> present in next ScreenShot
 
                 } catch (e: JSONException) {
                     Toast.makeText(applicationContext, "JSON Error occured", Toast.LENGTH_SHORT)
@@ -54,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
             } else {
-                val dialog = AlertDialog.Builder(this)
+                val dialog = AlertDialog.Builder(this)                 /// if there is no internet access then it sends to settings to turn on the internet
                 dialog.setTitle("Failed!")
                 dialog.setMessage("Network is not connected")
                 dialog.setPositiveButton("Open Settings") { text, listener ->
@@ -75,7 +72,8 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    fun volleyRequest(email: String, pass: String) {
+    fun volleyRequest(email: String, pass: String) {                                                           // logic to fetch API call
+
         val queue = Volley.newRequestQueue(this)
         val url = "https://api.cinquex.com/api/internshala/login"
 
@@ -88,19 +86,19 @@ class MainActivity : AppCompatActivity() {
             object : JsonObjectRequest(Request.Method.POST, url, jsonParams,
                 Response.Listener {
 
-                    msg = it.getString("message")
-                    createDialogCall(msg, 1)
+                    msg = it.getString("message")                                                         // msg store the result for SUCCESS LOGIN
+                    createDialogCall(msg, 1)                                                              // Now, we have the message, So we can create Dialog Box - Mode: 1 means Dialog box contain "Log out" button
 
                 }, Response.ErrorListener {
-                    val str = String(it.networkResponse.data, Charsets.UTF_8)
-                    val data = JSONObject(str)
+                    val str = String(it.networkResponse.data, Charsets.UTF_8)                                   // parsing JSON Object for FAILED LOGIN
+                    val data = JSONObject(str)                                                                  // data contain JSON Object (which contains message)
 
-                    if (it.networkResponse.statusCode == 403) {
-                        msg = data.getString("message").toString()
-                    }else{
-                        msg = data.getJSONObject("message").getJSONArray("email")[0].toString()
+                    if (it.networkResponse.statusCode == 403) {                                                 // Error Code : 403 - Wrong Credentials
+                        msg = data.getString("message").toString()                                                  // msg store message if Error-403 happened
+                    }else{                                                                                      // Error Code : 400 - Validation Error
+                        msg = data.getJSONObject("message").getJSONArray("email")[0].toString()              // msg store message if Error-400 happened --- here JSON Object has JSON Array (So it takes 2 calls)
                     }
-                    createDialogCall(msg, 2)
+                    createDialogCall(msg, 2)                                                              // Now, we have the message, So we can create Dialog Box - Mode: 2 means Dialog box contain "Try Again" button
                 }
             ) {
                 override fun getHeaders(): MutableMap<String, String> {
@@ -113,7 +111,8 @@ class MainActivity : AppCompatActivity() {
         queue.add(jsonObjectRequest)
     }
 
-    fun createDialogCall(msg : String, mode : Int){
+
+    fun createDialogCall(msg : String, mode : Int){                                                 // Dialog Box creation function
 
         // Mode:
         // 1 -> Log out
@@ -142,4 +141,6 @@ class MainActivity : AppCompatActivity() {
         dialog.create()
         dialog.show()
     }
+
+
 }
